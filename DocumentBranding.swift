@@ -1,5 +1,7 @@
+import Foundation
+
 public enum DocumentBranding {
-    public enum BrandStyle {
+    public struct BrandStyle {
         public let name: String
         public let accentHex: String
         public let contacts: [String]
@@ -20,7 +22,7 @@ public enum DocumentBranding {
 
 public enum BrandPalette {
     /// Phoenix Hovan default brand style with contacts.
-    public static let phoenixHovan = BrandStyle(
+    public static let phoenixHovan = DocumentBranding.BrandStyle(
         name: "Phoenix Hovan",
         accentHex: "#0B5FFF",
         contacts: [
