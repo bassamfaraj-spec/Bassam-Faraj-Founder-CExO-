@@ -46,8 +46,55 @@ public enum TeamDocumentGenerator {
     public static func writeConfidentialBreakdown(to directory: URL, bodyOnly: Bool = false) throws -> URL {
         let content = BassamFarajJr.confidentialBreakdown(bodyOnly: bodyOnly)
         let url = directory.appendingPathComponent("Founder_Portfolio_Confidential.md")
-        try content.data(using: .utf8)?.write(to: url)
+        try Data(content.utf8).write(to: url)
         return url
+    }
+
+    @discardableResult
+    public static func writeInitiativeLaunchShield(
+        to directory: URL,
+        focus: String = "Security, launch readiness, and account recovery",
+        includeContactRouting: Bool = false,
+        bodyOnly: Bool = false
+    ) throws -> URL {
+        let content = BassamFarajJr.initiativeLaunchShield(
+            focus: focus,
+            includeContactRouting: includeContactRouting,
+            bodyOnly: bodyOnly
+        )
+        let url = directory.appendingPathComponent("Initiative_Launch_Shield.md")
+        try Data(content.utf8).write(to: url)
+        return url
+    }
+
+    @discardableResult
+    public static func writeKeelportCascade(
+        to directory: URL,
+        focus: String = "AR Infusion membership, product cascade, media quality, and AI safety",
+        includeAppStoreConnectChecklist: Bool = true,
+        includeAdultAndSubstanceSafety: Bool = true,
+        bodyOnly: Bool = false
+    ) throws -> URL {
+        try KeelportCascadeGenerator.write(
+            to: directory,
+            focus: focus,
+            includeAppStoreConnectChecklist: includeAppStoreConnectChecklist,
+            includeAdultAndSubstanceSafety: includeAdultAndSubstanceSafety,
+            bodyOnly: bodyOnly
+        )
+    }
+
+    @discardableResult
+    public static func writeLegalHandoff(
+        to directory: URL,
+        focus: String = "ChatGPT, Faraj Law, Faraj Legal, eSign, and A-Z lifetime work handoff",
+        bodyOnly: Bool = false
+    ) throws -> URL {
+        try KeelportCascadeGenerator.writeLegalHandoff(
+            to: directory,
+            focus: focus,
+            bodyOnly: bodyOnly
+        )
     }
 
     /// Generates all standard documents and returns their file URLs.
@@ -58,6 +105,9 @@ public enum TeamDocumentGenerator {
         urls.append(try writeVentureLaunch(to: directory, bodyOnly: bodyOnly))
         urls.append(try writeAerospacePortfolio(to: directory, bodyOnly: bodyOnly))
         urls.append(try writeConfidentialBreakdown(to: directory, bodyOnly: bodyOnly))
+        urls.append(try writeInitiativeLaunchShield(to: directory, bodyOnly: bodyOnly))
+        urls.append(try writeKeelportCascade(to: directory, bodyOnly: bodyOnly))
+        urls.append(try writeLegalHandoff(to: directory, bodyOnly: bodyOnly))
         return urls
     }
 }
