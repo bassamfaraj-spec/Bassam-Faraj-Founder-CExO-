@@ -136,8 +136,43 @@ public enum InvoiceGenerator {
             content = DocumentBranding.prependLetterhead(body, letterhead: head)
         }
         let url = directory.appendingPathComponent("Invoice_\(number).md")
-        try content.data(using: .utf8)?.write(to: url)
+        try Data(content.utf8).write(to: url)
         return url
+    }
+
+    @discardableResult
+    public static func writeHourlyInvoice(
+        to directory: URL,
+        billToName: String,
+        hours: Decimal,
+        hourlyRate: Decimal,
+        currencyCode: String = "USD",
+        taxRatePercent: Decimal = 0,
+        dueInDays: Int = 14,
+        letterheadStyle: BrandStyle = BrandPalette.founderPersonal,
+        bodyOnly: Bool = false,
+        notes: String? = nil
+    ) throws -> URL {
+        let billableHours = hours < 0 ? 0 : hours
+        let rate = hourlyRate < 0 ? 0 : hourlyRate
+        return try write(
+            to: directory,
+            billToName: billToName,
+            items: [
+                InvoiceLineItem(
+                    description: "Hourly services",
+                    quantity: billableHours,
+                    unitPrice: rate
+                )
+            ],
+            currencyCode: currencyCode,
+            taxRatePercent: taxRatePercent,
+            dueInDays: dueInDays,
+            letterheadStyle: letterheadStyle,
+            entityKind: .individual,
+            bodyOnly: bodyOnly,
+            notes: notes
+        )
     }
 
     private static func defaultInvoiceNumber(on date: Date) -> String {

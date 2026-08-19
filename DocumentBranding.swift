@@ -16,6 +16,48 @@ public enum DocumentBranding {
         accentHex: "#FF0000",
         contacts: ["default@example.com"]
     )
+
+    public static func prependLetterhead(_ body: String, letterhead: Letterhead) -> String {
+        var lines: [String] = [
+            "---",
+            "brand: \(letterhead.style.name)",
+            "kind: \(letterhead.kind.rawValue)",
+            "accent: \(letterhead.style.accentHex)",
+            "subtitle: \(letterhead.subtitle)",
+            "contacts:"
+        ]
+        lines.append(contentsOf: letterhead.style.contacts.map { "- \($0)" })
+        if let disclaimer = letterhead.disclaimer, !disclaimer.isEmpty {
+            lines.append("disclaimer: \(disclaimer)")
+        }
+        lines.append("---")
+        lines.append("")
+        lines.append(body)
+        return lines.joined(separator: "\n")
+    }
+}
+
+public typealias BrandStyle = DocumentBranding.BrandStyle
+
+public enum EntityKind: String, Codable, Sendable {
+    case individual
+    case company
+    case program
+    case confidential
+}
+
+public struct Letterhead: Equatable, Hashable, Codable, Sendable {
+    public var style: BrandStyle
+    public var kind: EntityKind
+    public var subtitle: String
+    public var disclaimer: String?
+
+    public init(style: BrandStyle, kind: EntityKind, subtitle: String, disclaimer: String?) {
+        self.style = style
+        self.kind = kind
+        self.subtitle = subtitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.disclaimer = disclaimer?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 public enum BrandPalette {
@@ -28,6 +70,12 @@ public enum BrandPalette {
             "business@phoenixhovan.com",
             "+1-614-615-3444"
         ]
+    )
+
+    public static let founderPersonal = BrandStyle(
+        name: "Bassam S Faraj Jr",
+        accentHex: "#B91C1C",
+        contacts: phoenixHovan.contacts
     )
 }
 
