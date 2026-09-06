@@ -25,8 +25,11 @@ public struct TeamExportView: View {
                     Button("Run Initiative Launch Shield") {
                         runInitiative(focus: "Security, launch readiness, and account recovery")
                     }
-                    Button("Create Keelport AR Cascade") {
+                    Button("Create AR Infusion Membership Cascade") {
                         generateKeelportCascade()
+                    }
+                    Button("Create ChatGPT Legal eSign Handoff") {
+                        generateLegalHandoff()
                     }
                     Button("Restore & Verify Purchases") { Task { await restoreAndVerify() } }
                     Button("Manage Subscriptions") { manageSubscriptions() }
@@ -105,7 +108,7 @@ public struct TeamExportView: View {
             let includeAppStoreConnectChecklist = note.userInfo?[AssistantActionKeys.includeAppStoreConnectChecklist] as? Bool ?? true
             let includeAdultAndSubstanceSafety = note.userInfo?[AssistantActionKeys.includeAdultAndSubstanceSafety] as? Bool ?? true
             generateKeelportCascade(
-                focus: focus ?? "AR assistants, product cascade, media quality, and AI safety",
+                focus: focus ?? "AR Infusion membership, product cascade, media quality, and AI safety",
                 includeAppStoreConnectChecklist: includeAppStoreConnectChecklist,
                 includeAdultAndSubstanceSafety: includeAdultAndSubstanceSafety
             )
@@ -159,7 +162,7 @@ public struct TeamExportView: View {
     }
 
     private func generateKeelportCascade(
-        focus: String = "AR assistants, product cascade, media quality, and AI safety",
+        focus: String = "AR Infusion membership, product cascade, media quality, and AI safety",
         includeAppStoreConnectChecklist: Bool = true,
         includeAdultAndSubstanceSafety: Bool = true
     ) {
@@ -172,6 +175,23 @@ public struct TeamExportView: View {
                 bodyOnly: bodyOnly
             )
             statusMessage = "Keelport cascade created: \(url.lastPathComponent)"
+            NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
+        } catch {
+            statusMessage = "Error: \(error.localizedDescription)"
+            NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
+        }
+    }
+
+    private func generateLegalHandoff(
+        focus: String = "ChatGPT, Faraj Law, Faraj Legal, eSign, and A-Z lifetime work handoff"
+    ) {
+        do {
+            let url = try TeamDocumentGenerator.writeLegalHandoff(
+                to: exportDirectory,
+                focus: focus,
+                bodyOnly: bodyOnly
+            )
+            statusMessage = "Legal eSign handoff created: \(url.lastPathComponent)"
             NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
         } catch {
             statusMessage = "Error: \(error.localizedDescription)"

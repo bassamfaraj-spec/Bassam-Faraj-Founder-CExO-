@@ -103,7 +103,7 @@ struct RunInitiativeTool: Tool {
 @available(iOS 26.0, macOS 26.0, *)
 struct GenerateKeelportCascadeTool: Tool {
     let name = "generateKeelportCascade"
-    let description = "Create the Keelport AR Infusion cascade plan."
+    let description = "Create the Keelport AR Infusion cascade and membership category plan."
 
     @Generable
     struct Arguments {

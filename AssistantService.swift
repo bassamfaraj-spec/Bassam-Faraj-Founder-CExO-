@@ -36,7 +36,7 @@ public final class AssistantService {
     - CreateInvoiceTool(billToName: String, hours: Double, hourlyRate: Double)
     - RestoreVerifyTool()
     - RunInitiativeTool(focus: String, includeContactRouting: Bool)
-    - GenerateKeelportCascadeTool(focus: String, includeAppStoreConnectChecklist: Bool, includeAdultAndSubstanceSafety: Bool)
+    - GenerateKeelportCascadeTool(focus: String, includeAppStoreConnectChecklist: Bool, includeAdultAndSubstanceSafety: Bool) for AR Infusion membership, category, and cascade planning
     """
 
     #if canImport(FoundationModels)

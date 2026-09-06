@@ -70,7 +70,7 @@ public enum TeamDocumentGenerator {
     @discardableResult
     public static func writeKeelportCascade(
         to directory: URL,
-        focus: String = "AR assistants, product cascade, media quality, and AI safety",
+        focus: String = "AR Infusion membership, product cascade, media quality, and AI safety",
         includeAppStoreConnectChecklist: Bool = true,
         includeAdultAndSubstanceSafety: Bool = true,
         bodyOnly: Bool = false
@@ -80,6 +80,19 @@ public enum TeamDocumentGenerator {
             focus: focus,
             includeAppStoreConnectChecklist: includeAppStoreConnectChecklist,
             includeAdultAndSubstanceSafety: includeAdultAndSubstanceSafety,
+            bodyOnly: bodyOnly
+        )
+    }
+
+    @discardableResult
+    public static func writeLegalHandoff(
+        to directory: URL,
+        focus: String = "ChatGPT, Faraj Law, Faraj Legal, eSign, and A-Z lifetime work handoff",
+        bodyOnly: Bool = false
+    ) throws -> URL {
+        try KeelportCascadeGenerator.writeLegalHandoff(
+            to: directory,
+            focus: focus,
             bodyOnly: bodyOnly
         )
     }
@@ -94,6 +107,7 @@ public enum TeamDocumentGenerator {
         urls.append(try writeConfidentialBreakdown(to: directory, bodyOnly: bodyOnly))
         urls.append(try writeInitiativeLaunchShield(to: directory, bodyOnly: bodyOnly))
         urls.append(try writeKeelportCascade(to: directory, bodyOnly: bodyOnly))
+        urls.append(try writeLegalHandoff(to: directory, bodyOnly: bodyOnly))
         return urls
     }
 }
