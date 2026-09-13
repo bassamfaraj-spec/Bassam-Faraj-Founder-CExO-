@@ -129,4 +129,49 @@ struct GenerateKeelportCascadeTool: Tool {
     }
 }
 
+@available(iOS 26.0, macOS 26.0, *)
+struct GenerateHiResHandoffTool: Tool {
+    let name = "generateHiResHandoff"
+    let description = "Create a hi-res rendering/compression engineering handoff with FaceTime and video-chat rollout details."
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "Target platform")
+        var platform: String
+
+        @Guide(description: "Quality profile (4K, 5K, 10K, 84MP)")
+        var profile: String
+
+        @Guide(description: "Quality goal (Quality First, Size First, Balanced)")
+        var qualityGoal: String
+
+        @Guide(description: "Output format (HEIF, JPEG, PNG, H.265, ProRes)")
+        var format: String
+
+        @Guide(description: "FaceTime integration enabled")
+        var faceTimeIntegration: Bool
+
+        @Guide(description: "Video chat integration enabled")
+        var videoChatIntegration: Bool
+
+        @Guide(description: "Early access only")
+        var earlyAccessOnly: Bool
+    }
+
+    func call(arguments: Arguments) async throws -> String {
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .assistantGenerateHiResHandoff, object: nil, userInfo: [
+                AssistantActionKeys.mediaPlatform: arguments.platform,
+                AssistantActionKeys.mediaProfile: arguments.profile,
+                AssistantActionKeys.mediaQualityGoal: arguments.qualityGoal,
+                AssistantActionKeys.mediaFormat: arguments.format,
+                AssistantActionKeys.faceTimeIntegration: arguments.faceTimeIntegration,
+                AssistantActionKeys.videoChatIntegration: arguments.videoChatIntegration,
+                AssistantActionKeys.mediaEarlyAccessOnly: arguments.earlyAccessOnly
+            ])
+        }
+        return "Hi-res engineering handoff queued for \(arguments.platform), \(arguments.profile), \(arguments.qualityGoal), \(arguments.format)."
+    }
+}
+
 #endif

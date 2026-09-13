@@ -97,6 +97,14 @@ public enum TeamDocumentGenerator {
         )
     }
 
+    @discardableResult
+    public static func writeHiResMediaEngineeringHandoff(
+        to directory: URL,
+        request: MediaRenderRequest
+    ) throws -> URL {
+        try HiResEngineeringHandoffGenerator.write(to: directory, request: request)
+    }
+
     /// Generates all standard documents and returns their file URLs.
     @discardableResult
     public static func generateAll(to directory: URL, bodyOnly: Bool = false) throws -> [URL] {
