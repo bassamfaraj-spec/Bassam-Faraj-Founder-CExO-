@@ -13,6 +13,15 @@ public struct TeamExportView: View {
     @State private var grantedProducts: [String] = []
     @State private var hasBootRefreshed: Bool = false
     @State private var showingAssistant = false
+    @State private var mediaPlatform: MediaTargetPlatform = .iOS
+    @State private var mediaProfile: MediaQualityProfile = .megapixels84
+    @State private var mediaQualityGoal: MediaQualityGoal = .qualityFirst
+    @State private var mediaOutputFormat: MediaOutputFormat = .heif
+    @State private var faceTimeIntegration: Bool = true
+    @State private var videoChatIntegration: Bool = true
+    @State private var mediaEarlyAccessOnly: Bool = true
+    @State private var mediaJobProgress: Double = 0
+    @State private var mediaJobID: UUID?
 
     public init() {}
 
@@ -43,6 +52,37 @@ public struct TeamExportView: View {
                     TextField("Hourly Rate", text: $hourlyRate)
                         .keyboardType(.decimalPad)
                     Button("Create Hourly Invoice") { createInvoice() }
+                }
+
+                Section("Hi-Res Rendering and Integrations") {
+                    Picker("Target Platform", selection: $mediaPlatform) {
+                        ForEach(MediaTargetPlatform.allCases) { platform in
+                            Text(platform.rawValue).tag(platform)
+                        }
+                    }
+                    Picker("Quality Profile", selection: $mediaProfile) {
+                        ForEach(MediaQualityProfile.allCases) { profile in
+                            Text(profile.rawValue).tag(profile)
+                        }
+                    }
+                    Picker("Quality Goal", selection: $mediaQualityGoal) {
+                        ForEach(MediaQualityGoal.allCases) { goal in
+                            Text(goal.rawValue).tag(goal)
+                        }
+                    }
+                    Picker("Output Format", selection: $mediaOutputFormat) {
+                        ForEach(MediaOutputFormat.allCases) { format in
+                            Text(format.rawValue).tag(format)
+                        }
+                    }
+                    Toggle("FaceTime integration", isOn: $faceTimeIntegration)
+                    Toggle("Video chat integration", isOn: $videoChatIntegration)
+                    Toggle("Early access only", isOn: $mediaEarlyAccessOnly)
+                    Button("Create Hi-Res Engineering Handoff") { createHiResEngineeringHandoff() }
+                    Button("Queue Hi-Res Background Processing") { Task { await queueHiResBackgroundProcessing() } }
+                    if mediaJobID != nil {
+                        ProgressView(value: mediaJobProgress)
+                    }
                 }
 
                 if !statusMessage.isEmpty {
@@ -112,6 +152,34 @@ public struct TeamExportView: View {
                 includeAppStoreConnectChecklist: includeAppStoreConnectChecklist,
                 includeAdultAndSubstanceSafety: includeAdultAndSubstanceSafety
             )
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .assistantGenerateHiResHandoff)) { note in
+            if let raw = note.userInfo?[AssistantActionKeys.mediaPlatform] as? String,
+               let value = MediaTargetPlatform(rawValue: raw) {
+                mediaPlatform = value
+            }
+            if let raw = note.userInfo?[AssistantActionKeys.mediaProfile] as? String,
+               let value = MediaQualityProfile(rawValue: raw) {
+                mediaProfile = value
+            }
+            if let raw = note.userInfo?[AssistantActionKeys.mediaQualityGoal] as? String,
+               let value = MediaQualityGoal(rawValue: raw) {
+                mediaQualityGoal = value
+            }
+            if let raw = note.userInfo?[AssistantActionKeys.mediaFormat] as? String,
+               let value = MediaOutputFormat(rawValue: raw) {
+                mediaOutputFormat = value
+            }
+            if let value = note.userInfo?[AssistantActionKeys.faceTimeIntegration] as? Bool {
+                faceTimeIntegration = value
+            }
+            if let value = note.userInfo?[AssistantActionKeys.videoChatIntegration] as? Bool {
+                videoChatIntegration = value
+            }
+            if let value = note.userInfo?[AssistantActionKeys.mediaEarlyAccessOnly] as? Bool {
+                mediaEarlyAccessOnly = value
+            }
+            createHiResEngineeringHandoff()
         }
     }
 
@@ -197,6 +265,61 @@ public struct TeamExportView: View {
             statusMessage = "Error: \(error.localizedDescription)"
             NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
         }
+    }
+
+    private func createHiResEngineeringHandoff() {
+        do {
+            let request = mediaRequest()
+            let url = try TeamDocumentGenerator.writeHiResMediaEngineeringHandoff(
+                to: exportDirectory,
+                request: request
+            )
+            statusMessage = "Hi-res engineering handoff created: \(url.lastPathComponent)"
+            NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
+        } catch {
+            statusMessage = "Error: \(error.localizedDescription)"
+            NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
+        }
+    }
+
+    private func queueHiResBackgroundProcessing() async {
+        let request = mediaRequest()
+        let jobID = await HiResMediaPipeline.shared.submit(request: request)
+        await MainActor.run {
+            mediaJobID = jobID
+            mediaJobProgress = 0
+            statusMessage = "Queued hi-res media background processing."
+            NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
+        }
+
+        while true {
+            guard let snapshot = await HiResMediaPipeline.shared.snapshot(for: jobID) else { break }
+            await MainActor.run {
+                mediaJobProgress = snapshot.progress
+                statusMessage = "Hi-res job \(snapshot.status.rawValue): \(snapshot.message)"
+                NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
+            }
+            if snapshot.status == .completed || snapshot.status == .failed {
+                break
+            }
+            try? await Task.sleep(nanoseconds: 200_000_000)
+        }
+    }
+
+    private func mediaRequest() -> MediaRenderRequest {
+        MediaRenderRequest(
+            platform: mediaPlatform,
+            requestedProfile: mediaProfile,
+            qualityGoal: mediaQualityGoal,
+            outputFormat: mediaOutputFormat,
+            modules: [.teamExport, .assistant],
+            featureFlags: MediaFeatureFlags(
+                enableHiResRendering: true,
+                enableFaceTimeIntegration: faceTimeIntegration,
+                enableVideoChatIntegration: videoChatIntegration,
+                earlyAccessOnly: mediaEarlyAccessOnly
+            )
+        )
     }
 
     private func restoreAndVerify() async {

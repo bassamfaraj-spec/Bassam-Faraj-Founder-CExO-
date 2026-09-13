@@ -37,12 +37,13 @@ public final class AssistantService {
     - RestoreVerifyTool()
     - RunInitiativeTool(focus: String, includeContactRouting: Bool)
     - GenerateKeelportCascadeTool(focus: String, includeAppStoreConnectChecklist: Bool, includeAdultAndSubstanceSafety: Bool) for AR Infusion membership, category, and cascade planning
+    - GenerateHiResHandoffTool(platform: String, profile: String, qualityGoal: String, format: String, faceTimeIntegration: Bool, videoChatIntegration: Bool, earlyAccessOnly: Bool) for hi-res rendering/compression engineering handoffs
     """
 
     #if canImport(FoundationModels)
     @available(iOS 26.0, macOS 26.0, *)
     private var fmTools: [any Tool] {
-        [GenerateDocsTool(), CreateInvoiceTool(), RestoreVerifyTool(), RunInitiativeTool(), GenerateKeelportCascadeTool()]
+        [GenerateDocsTool(), CreateInvoiceTool(), RestoreVerifyTool(), RunInitiativeTool(), GenerateKeelportCascadeTool(), GenerateHiResHandoffTool()]
     }
     #endif
 
