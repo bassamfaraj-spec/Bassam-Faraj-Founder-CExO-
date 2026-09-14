@@ -300,7 +300,7 @@ public actor HiResMediaPipeline {
             to: &selected,
             notes: &notes,
             adjustmentNote: { previous, current in
-                "\(request.outputFormat.rawValue) output is currently validated through \(current.rawValue); adjusted from \(previous.rawValue)."
+                "\(request.outputFormat.rawValue) output is currently validated through \(current.rawValue); adjusted from \(previous.rawValue) to \(current.rawValue)."
             }
         ) == false {
             notes.append("\(request.outputFormat.rawValue) output validated for \(selected.rawValue).")
