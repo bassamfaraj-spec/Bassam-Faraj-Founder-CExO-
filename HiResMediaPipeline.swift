@@ -308,7 +308,7 @@ public actor HiResMediaPipeline {
                     "\(request.outputFormat.rawValue) output is currently validated through \(current.rawValue); adjusted from \(previous.rawValue) to \(current.rawValue)."
                 }
             ) == false {
-                notes.append("\(request.outputFormat.rawValue) output validated for \(selected.rawValue).")
+                notes.append("\(request.outputFormat.rawValue) output is validated through \(formatCap.rawValue).")
             }
         } else {
             notes.append("\(request.outputFormat.rawValue) output does not impose an additional profile cap.")
