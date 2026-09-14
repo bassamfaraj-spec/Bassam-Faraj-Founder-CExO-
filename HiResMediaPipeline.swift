@@ -19,6 +19,17 @@ public enum MediaQualityGoal: String, CaseIterable, Codable, Sendable, Identifia
     case balanced = "Balanced"
 
     public var id: String { rawValue }
+
+    fileprivate var profileCap: MediaQualityProfile? {
+        switch self {
+        case .qualityFirst:
+            nil
+        case .sizeFirst:
+            .ultraHD5K
+        case .balanced:
+            .ultraHD10K
+        }
+    }
 }
 
 public enum MediaOutputFormat: String, CaseIterable, Codable, Sendable, Identifiable {
@@ -29,6 +40,17 @@ public enum MediaOutputFormat: String, CaseIterable, Codable, Sendable, Identifi
     case proRes = "ProRes"
 
     public var id: String { rawValue }
+
+    fileprivate var profileCap: MediaQualityProfile? {
+        switch self {
+        case .heif, .jpeg:
+            nil
+        case .png:
+            .ultraHD5K
+        case .h265, .proRes:
+            .ultraHD10K
+        }
+    }
 }
 
 public enum MediaQualityProfile: String, CaseIterable, Codable, Sendable, Identifiable {
@@ -255,36 +277,22 @@ public actor HiResMediaPipeline {
         var selected = resolvedProfile
         var notes: [String] = []
 
-        let qualityCap: MediaQualityProfile?
         switch request.qualityGoal {
         case .qualityFirst:
-            qualityCap = nil
             notes.append("Quality First policy preserved the highest compatible profile.")
         case .sizeFirst:
-            qualityCap = .ultraHD5K
             notes.append("Size First policy enforces a 5K ceiling for stricter size control.")
         case .balanced:
-            qualityCap = .ultraHD10K
             notes.append("Balanced policy caps output at 10K to trade off size and fidelity.")
         }
 
-        if let qualityCap, selected.policyOrder > qualityCap.policyOrder {
+        if let qualityCap = request.qualityGoal.profileCap, selected.policyOrder > qualityCap.policyOrder {
             let previous = selected
             selected = qualityCap
             notes.append("Quality policy adjusted output from \(previous.rawValue) to \(selected.rawValue).")
         }
 
-        let formatCap: MediaQualityProfile?
-        switch request.outputFormat {
-        case .heif, .jpeg:
-            formatCap = nil
-        case .png:
-            formatCap = .ultraHD5K
-        case .h265, .proRes:
-            formatCap = .ultraHD10K
-        }
-
-        if let formatCap, selected.policyOrder > formatCap.policyOrder {
+        if let formatCap = request.outputFormat.profileCap, selected.policyOrder > formatCap.policyOrder {
             let previous = selected
             selected = formatCap
             notes.append("\(request.outputFormat.rawValue) output is currently validated through \(selected.rawValue); adjusted from \(previous.rawValue).")
