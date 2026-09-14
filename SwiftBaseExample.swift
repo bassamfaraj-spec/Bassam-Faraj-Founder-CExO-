@@ -68,6 +68,17 @@ public enum TeamDocumentGenerator {
     }
 
     @discardableResult
+    public static func writeStealthPrivacyShield(
+        to directory: URL,
+        bodyOnly: Bool = false
+    ) throws -> URL {
+        let content = StealthPrivacyShield.standard.markdown(bodyOnly: bodyOnly)
+        let url = directory.appendingPathComponent("Stealth_Privacy_Shield.md")
+        try Data(content.utf8).write(to: url)
+        return url
+    }
+
+    @discardableResult
     public static func writeKeelportCascade(
         to directory: URL,
         focus: String = "AR Infusion membership, product cascade, media quality, and AI safety",
@@ -114,6 +125,7 @@ public enum TeamDocumentGenerator {
         urls.append(try writeAerospacePortfolio(to: directory, bodyOnly: bodyOnly))
         urls.append(try writeConfidentialBreakdown(to: directory, bodyOnly: bodyOnly))
         urls.append(try writeInitiativeLaunchShield(to: directory, bodyOnly: bodyOnly))
+        urls.append(try writeStealthPrivacyShield(to: directory, bodyOnly: bodyOnly))
         urls.append(try writeKeelportCascade(to: directory, bodyOnly: bodyOnly))
         urls.append(try writeLegalHandoff(to: directory, bodyOnly: bodyOnly))
         return urls

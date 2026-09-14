@@ -30,3 +30,11 @@ Use this checklist when phone, email, OpenAI/ChatGPT, Apple ID, or carrier compr
 - Confirm email sync by checking aliases, forwarding, filters, recovery contacts, DKIM/SPF/DMARC, mailbox rules, and connected mail clients.
 - Update devices, inspect configuration profiles and MDM, remove unknown VPNs, reset network settings, and use Lockdown Mode if there is credible targeted spyware risk.
 - If compromise remains credible after account recovery, back up critical files, erase and restore devices from trusted media, then re-add accounts one at a time.
+
+## Stealth Privacy Shield
+
+The repository now includes a `Stealth Privacy Shield` document generator for personal and business technology safety. Use it as a baseline checklist to:
+
+- Protect devices, networks, apps, cloud accounts, and shared business systems with least-privilege access and strong authentication.
+- Keep secrets, recovery data, and regulated or sensitive records out of source control and public collaboration channels.
+- Maintain repeatable recovery steps for account compromise, data exposure, and provider escalation.
