@@ -52,6 +52,15 @@ public enum MediaQualityProfile: String, CaseIterable, Codable, Sendable, Identi
         let d = dimensions
         return (Double(d.width) * Double(d.height)) / 1_000_000.0
     }
+
+    fileprivate var policyOrder: Int {
+        switch self {
+        case .ultraHD4K: return 0
+        case .ultraHD5K: return 1
+        case .ultraHD10K: return 2
+        case .megapixels84: return 3
+        }
+    }
 }
 
 public struct MediaFeatureFlags: Equatable, Hashable, Codable, Sendable {
@@ -204,10 +213,11 @@ public actor HiResMediaPipeline {
         }
 
         let resolved = resolveProfile(requested: request.requestedProfile, capability: capability)
+        let policy = applyPolicy(to: resolved.profile, request: request)
         let result = MediaRenderResult(
-            resolvedProfile: resolved.profile,
-            fallbackApplied: resolved.fallbackApplied,
-            notes: resolved.notes + integrationNotes(for: request)
+            resolvedProfile: policy.profile,
+            fallbackApplied: resolved.fallbackApplied || policy.profile != request.requestedProfile,
+            notes: resolved.notes + policy.notes + integrationNotes(for: request)
         )
         jobs[id]?.result = result
         jobs[id]?.status = .completed
@@ -236,6 +246,53 @@ public actor HiResMediaPipeline {
         }
 
         return (selected, fallbackApplied, notes)
+    }
+
+    private func applyPolicy(
+        to resolvedProfile: MediaQualityProfile,
+        request: MediaRenderRequest
+    ) -> (profile: MediaQualityProfile, notes: [String]) {
+        var selected = resolvedProfile
+        var notes: [String] = []
+
+        let qualityCap: MediaQualityProfile?
+        switch request.qualityGoal {
+        case .qualityFirst:
+            qualityCap = nil
+            notes.append("Quality First policy preserved the highest compatible profile.")
+        case .sizeFirst:
+            qualityCap = .ultraHD5K
+            notes.append("Size First policy enforces a 5K ceiling for stricter size control.")
+        case .balanced:
+            qualityCap = .ultraHD10K
+            notes.append("Balanced policy caps output at 10K to trade off size and fidelity.")
+        }
+
+        if let qualityCap, selected.policyOrder > qualityCap.policyOrder {
+            let previous = selected
+            selected = qualityCap
+            notes.append("Quality policy adjusted output from \(previous.rawValue) to \(selected.rawValue).")
+        }
+
+        let formatCap: MediaQualityProfile?
+        switch request.outputFormat {
+        case .heif, .jpeg:
+            formatCap = nil
+        case .png:
+            formatCap = .ultraHD5K
+        case .h265, .proRes:
+            formatCap = .ultraHD10K
+        }
+
+        if let formatCap, selected.policyOrder > formatCap.policyOrder {
+            let previous = selected
+            selected = formatCap
+            notes.append("\(request.outputFormat.rawValue) output is currently validated through \(selected.rawValue); adjusted from \(previous.rawValue).")
+        } else {
+            notes.append("\(request.outputFormat.rawValue) output validated for \(selected.rawValue).")
+        }
+
+        return (selected, notes)
     }
 
     private func integrationNotes(for request: MediaRenderRequest) -> [String] {
