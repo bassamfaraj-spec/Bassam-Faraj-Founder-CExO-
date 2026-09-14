@@ -41,13 +41,20 @@ public struct StealthPrivacyShield: Equatable, Hashable, Codable, Sendable {
 
         return [
             "---",
-            "title: \(title)",
-            "audience: Personal and Business Technology",
-            "classification: Operational privacy and security checklist",
+            "title: \(yamlQuoted(title))",
+            "audience: \(yamlQuoted("Personal and Business Technology"))",
+            "classification: \(yamlQuoted("Operational privacy and security checklist"))",
             "---",
             "",
             body
         ].joined(separator: "\n")
+    }
+
+    private func yamlQuoted(_ value: String) -> String {
+        let escaped = value
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        return "\"\(escaped)\""
     }
 
     public static let standard = StealthPrivacyShield(
