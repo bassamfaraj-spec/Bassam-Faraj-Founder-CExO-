@@ -19,6 +19,17 @@ public enum MediaQualityGoal: String, CaseIterable, Codable, Sendable, Identifia
     case balanced = "Balanced"
 
     public var id: String { rawValue }
+
+    fileprivate var profileCap: MediaQualityProfile? {
+        switch self {
+        case .qualityFirst:
+            nil
+        case .sizeFirst:
+            .ultraHD5K
+        case .balanced:
+            .ultraHD10K
+        }
+    }
 }
 
 public enum MediaOutputFormat: String, CaseIterable, Codable, Sendable, Identifiable {
@@ -29,6 +40,17 @@ public enum MediaOutputFormat: String, CaseIterable, Codable, Sendable, Identifi
     case proRes = "ProRes"
 
     public var id: String { rawValue }
+
+    fileprivate var profileCap: MediaQualityProfile? {
+        switch self {
+        case .heif, .jpeg:
+            nil
+        case .png:
+            .ultraHD5K
+        case .h265, .proRes:
+            .ultraHD10K
+        }
+    }
 }
 
 public enum MediaQualityProfile: String, CaseIterable, Codable, Sendable, Identifiable {
@@ -51,6 +73,15 @@ public enum MediaQualityProfile: String, CaseIterable, Codable, Sendable, Identi
     public var megapixels: Double {
         let d = dimensions
         return (Double(d.width) * Double(d.height)) / 1_000_000.0
+    }
+
+    fileprivate var policyOrder: Int {
+        switch self {
+        case .ultraHD4K: return 0
+        case .ultraHD5K: return 1
+        case .ultraHD10K: return 2
+        case .megapixels84: return 3
+        }
     }
 }
 
@@ -204,10 +235,11 @@ public actor HiResMediaPipeline {
         }
 
         let resolved = resolveProfile(requested: request.requestedProfile, capability: capability)
+        let policy = applyPolicy(to: resolved.profile, request: request)
         let result = MediaRenderResult(
-            resolvedProfile: resolved.profile,
-            fallbackApplied: resolved.fallbackApplied,
-            notes: resolved.notes + integrationNotes(for: request)
+            resolvedProfile: policy.profile,
+            fallbackApplied: resolved.fallbackApplied || policy.profile != resolved.profile,
+            notes: resolved.notes + policy.notes + integrationNotes(for: request)
         )
         jobs[id]?.result = result
         jobs[id]?.status = .completed
@@ -236,6 +268,51 @@ public actor HiResMediaPipeline {
         }
 
         return (selected, fallbackApplied, notes)
+    }
+
+    private func applyPolicy(
+        to resolvedProfile: MediaQualityProfile,
+        request: MediaRenderRequest
+    ) -> (profile: MediaQualityProfile, notes: [String]) {
+        var selected = resolvedProfile
+        var notes: [String] = []
+
+        applyCap(
+            request.qualityGoal.profileCap,
+            to: &selected,
+            notes: &notes,
+            adjustmentNote: { previous, current, _ in
+                "\(request.qualityGoal.rawValue) policy adjusted output from \(previous.rawValue) to \(current.rawValue)."
+            }
+        )
+
+        applyCap(
+            request.outputFormat.profileCap,
+            to: &selected,
+            notes: &notes,
+            adjustmentNote: { previous, current, cap in
+                "\(request.outputFormat.rawValue) output supports up to \(cap.rawValue); reduced from \(previous.rawValue) to \(current.rawValue)."
+            }
+        )
+
+        return (selected, notes)
+    }
+
+    @discardableResult
+    private func applyCap(
+        _ cap: MediaQualityProfile?,
+        to selected: inout MediaQualityProfile,
+        notes: inout [String],
+        adjustmentNote: (MediaQualityProfile, MediaQualityProfile, MediaQualityProfile) -> String
+    ) -> Bool {
+        guard let cap, selected.policyOrder > cap.policyOrder else {
+            return false
+        }
+
+        let previous = selected
+        selected = cap
+        notes.append(adjustmentNote(previous, selected, cap))
+        return true
     }
 
     private func integrationNotes(for request: MediaRenderRequest) -> [String] {
