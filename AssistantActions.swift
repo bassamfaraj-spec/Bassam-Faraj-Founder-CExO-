@@ -5,6 +5,7 @@ extension Notification.Name {
     static let assistantCreateInvoice = Notification.Name("assistant.createInvoice")
     static let assistantRestoreVerify = Notification.Name("assistant.restoreVerify")
     static let assistantRunInitiative = Notification.Name("assistant.runInitiative")
+    static let assistantGenerateStealthPrivacyShield = Notification.Name("assistant.generateStealthPrivacyShield")
     static let assistantGenerateKeelportCascade = Notification.Name("assistant.generateKeelportCascade")
     static let assistantGenerateHiResHandoff = Notification.Name("assistant.generateHiResHandoff")
 }
