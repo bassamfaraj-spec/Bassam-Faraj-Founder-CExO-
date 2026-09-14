@@ -279,7 +279,7 @@ public actor HiResMediaPipeline {
 
         switch request.qualityGoal {
         case .qualityFirst:
-            notes.append("Quality First policy preserved the highest compatible profile.")
+            break
         case .sizeFirst:
             if let cap = request.qualityGoal.profileCap {
                 notes.append("Size First policy enforces a \(cap.rawValue) ceiling for stricter size control.")
@@ -299,15 +299,27 @@ public actor HiResMediaPipeline {
             }
         )
 
-        if applyCap(
-            request.outputFormat.profileCap,
-            to: &selected,
-            notes: &notes,
-            adjustmentNote: { previous, current in
-                "\(request.outputFormat.rawValue) output is currently validated through \(current.rawValue); adjusted from \(previous.rawValue) to \(current.rawValue)."
+        if let formatCap = request.outputFormat.profileCap {
+            if applyCap(
+                formatCap,
+                to: &selected,
+                notes: &notes,
+                adjustmentNote: { previous, current in
+                    "\(request.outputFormat.rawValue) output is currently validated through \(current.rawValue); adjusted from \(previous.rawValue) to \(current.rawValue)."
+                }
+            ) == false {
+                notes.append("\(request.outputFormat.rawValue) output validated for \(selected.rawValue).")
             }
-        ) == false {
-            notes.append("\(request.outputFormat.rawValue) output validated for \(selected.rawValue).")
+        } else {
+            notes.append("\(request.outputFormat.rawValue) output does not impose an additional profile cap.")
+        }
+
+        if request.qualityGoal == .qualityFirst {
+            if selected == resolvedProfile {
+                notes.append("Quality First policy preserved the highest compatible profile.")
+            } else {
+                notes.append("Quality First policy accepted the final format-limited profile \(selected.rawValue).")
+            }
         }
 
         return (selected, notes)
