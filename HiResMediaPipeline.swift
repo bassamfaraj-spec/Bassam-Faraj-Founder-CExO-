@@ -238,7 +238,7 @@ public actor HiResMediaPipeline {
         let policy = applyPolicy(to: resolved.profile, request: request)
         let result = MediaRenderResult(
             resolvedProfile: policy.profile,
-            fallbackApplied: resolved.fallbackApplied || policy.profile != request.requestedProfile,
+            fallbackApplied: resolved.fallbackApplied || policy.profile != resolved.profile,
             notes: resolved.notes + policy.notes + integrationNotes(for: request)
         )
         jobs[id]?.result = result
