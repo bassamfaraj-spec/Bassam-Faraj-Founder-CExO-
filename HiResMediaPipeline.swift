@@ -286,21 +286,44 @@ public actor HiResMediaPipeline {
             notes.append("Balanced policy caps output at 10K to trade off size and fidelity.")
         }
 
-        if let qualityCap = request.qualityGoal.profileCap, selected.policyOrder > qualityCap.policyOrder {
-            let previous = selected
-            selected = qualityCap
-            notes.append("Quality policy adjusted output from \(previous.rawValue) to \(selected.rawValue).")
-        }
+        applyCap(
+            request.qualityGoal.profileCap,
+            to: &selected,
+            notes: &notes,
+            adjustmentNote: { previous, current in
+                "Quality policy adjusted output from \(previous.rawValue) to \(current.rawValue)."
+            }
+        )
 
-        if let formatCap = request.outputFormat.profileCap, selected.policyOrder > formatCap.policyOrder {
-            let previous = selected
-            selected = formatCap
-            notes.append("\(request.outputFormat.rawValue) output is currently validated through \(selected.rawValue); adjusted from \(previous.rawValue).")
-        } else {
+        if applyCap(
+            request.outputFormat.profileCap,
+            to: &selected,
+            notes: &notes,
+            adjustmentNote: { previous, current in
+                "\(request.outputFormat.rawValue) output is currently validated through \(current.rawValue); adjusted from \(previous.rawValue)."
+            }
+        ) == false {
             notes.append("\(request.outputFormat.rawValue) output validated for \(selected.rawValue).")
         }
 
         return (selected, notes)
+    }
+
+    @discardableResult
+    private func applyCap(
+        _ cap: MediaQualityProfile?,
+        to selected: inout MediaQualityProfile,
+        notes: inout [String],
+        adjustmentNote: (MediaQualityProfile, MediaQualityProfile) -> String
+    ) -> Bool {
+        guard let cap, selected.policyOrder > cap.policyOrder else {
+            return false
+        }
+
+        let previous = selected
+        selected = cap
+        notes.append(adjustmentNote(previous, selected))
+        return true
     }
 
     private func integrationNotes(for request: MediaRenderRequest) -> [String] {
