@@ -277,50 +277,23 @@ public actor HiResMediaPipeline {
         var selected = resolvedProfile
         var notes: [String] = []
 
-        switch request.qualityGoal {
-        case .qualityFirst:
-            break
-        case .sizeFirst:
-            if let cap = request.qualityGoal.profileCap {
-                notes.append("Size First policy enforces a \(cap.rawValue) ceiling for stricter size control.")
-            }
-        case .balanced:
-            if let cap = request.qualityGoal.profileCap {
-                notes.append("Balanced policy caps output at \(cap.rawValue) to trade off size and fidelity.")
-            }
-        }
-
         applyCap(
             request.qualityGoal.profileCap,
             to: &selected,
             notes: &notes,
-            adjustmentNote: { previous, current in
-                "Quality policy adjusted output from \(previous.rawValue) to \(current.rawValue)."
+            adjustmentNote: { previous, current, _ in
+                "\(request.qualityGoal.rawValue) policy adjusted output from \(previous.rawValue) to \(current.rawValue)."
             }
         )
 
-        if let formatCap = request.outputFormat.profileCap {
-            if applyCap(
-                formatCap,
-                to: &selected,
-                notes: &notes,
-                adjustmentNote: { previous, current in
-                    "\(request.outputFormat.rawValue) output is currently validated through \(current.rawValue); adjusted from \(previous.rawValue) to \(current.rawValue)."
-                }
-            ) == false {
-                notes.append("\(request.outputFormat.rawValue) output is validated through \(formatCap.rawValue).")
+        applyCap(
+            request.outputFormat.profileCap,
+            to: &selected,
+            notes: &notes,
+            adjustmentNote: { previous, current, cap in
+                "\(request.outputFormat.rawValue) output is validated through \(cap.rawValue); adjusted from \(previous.rawValue) to \(current.rawValue)."
             }
-        } else {
-            notes.append("\(request.outputFormat.rawValue) output does not impose an additional profile cap.")
-        }
-
-        if request.qualityGoal == .qualityFirst {
-            if selected == resolvedProfile {
-                notes.append("Quality First policy preserved the highest compatible profile.")
-            } else {
-                notes.append("Quality First policy accepted the final format-limited profile \(selected.rawValue).")
-            }
-        }
+        )
 
         return (selected, notes)
     }
@@ -330,7 +303,7 @@ public actor HiResMediaPipeline {
         _ cap: MediaQualityProfile?,
         to selected: inout MediaQualityProfile,
         notes: inout [String],
-        adjustmentNote: (MediaQualityProfile, MediaQualityProfile) -> String
+        adjustmentNote: (MediaQualityProfile, MediaQualityProfile, MediaQualityProfile) -> String
     ) -> Bool {
         guard let cap, selected.policyOrder > cap.policyOrder else {
             return false
@@ -338,7 +311,7 @@ public actor HiResMediaPipeline {
 
         let previous = selected
         selected = cap
-        notes.append(adjustmentNote(previous, selected))
+        notes.append(adjustmentNote(previous, selected, cap))
         return true
     }
 
