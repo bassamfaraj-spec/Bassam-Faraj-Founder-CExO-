@@ -281,9 +281,13 @@ public actor HiResMediaPipeline {
         case .qualityFirst:
             notes.append("Quality First policy preserved the highest compatible profile.")
         case .sizeFirst:
-            notes.append("Size First policy enforces a 5K ceiling for stricter size control.")
+            if let cap = request.qualityGoal.profileCap {
+                notes.append("Size First policy enforces a \(cap.rawValue) ceiling for stricter size control.")
+            }
         case .balanced:
-            notes.append("Balanced policy caps output at 10K to trade off size and fidelity.")
+            if let cap = request.qualityGoal.profileCap {
+                notes.append("Balanced policy caps output at \(cap.rawValue) to trade off size and fidelity.")
+            }
         }
 
         applyCap(
