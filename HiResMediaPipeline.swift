@@ -291,7 +291,7 @@ public actor HiResMediaPipeline {
             to: &selected,
             notes: &notes,
             adjustmentNote: { previous, current, cap in
-                "\(request.outputFormat.rawValue) output is validated through \(cap.rawValue); adjusted from \(previous.rawValue) to \(current.rawValue)."
+                "\(request.outputFormat.rawValue) output supports up to \(cap.rawValue); reduced from \(previous.rawValue) to \(current.rawValue)."
             }
         )
 
