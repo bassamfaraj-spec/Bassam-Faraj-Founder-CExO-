@@ -101,6 +101,52 @@ struct RunInitiativeTool: Tool {
 }
 
 @available(iOS 26.0, macOS 26.0, *)
+struct GenerateStealthPrivacyShieldTool: Tool {
+    let name = "generateStealthPrivacyShield"
+    let description = "Create the Stealth Privacy Shield checklist for personal and business technology."
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "Body only")
+        var bodyOnly: Bool
+    }
+
+    func call(arguments: Arguments) async throws -> String {
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .assistantGenerateStealthPrivacyShield, object: nil, userInfo: [
+                AssistantActionKeys.bodyOnly: arguments.bodyOnly
+            ])
+        }
+        return "Stealth Privacy Shield generation queued. \(bodyOnlySummary(arguments.bodyOnly))"
+    }
+
+    private func bodyOnlySummary(_ flag: Bool) -> String { flag ? "Body only enabled." : "Using letterhead." }
+}
+
+@available(iOS 26.0, macOS 26.0, *)
+struct GenerateLaunchMobilizationFootprintTool: Tool {
+    let name = "generateLaunchMobilizationFootprint"
+    let description = "Create the launch mobilization footprint for debug, pre-release, testing, creator activation, and recruiting."
+
+    @Generable
+    struct Arguments {
+        @Guide(description: "Body only")
+        var bodyOnly: Bool
+    }
+
+    func call(arguments: Arguments) async throws -> String {
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .assistantGenerateLaunchMobilizationFootprint, object: nil, userInfo: [
+                AssistantActionKeys.bodyOnly: arguments.bodyOnly
+            ])
+        }
+        return "Launch mobilization footprint generation queued. \(bodyOnlySummary(arguments.bodyOnly))"
+    }
+
+    private func bodyOnlySummary(_ flag: Bool) -> String { flag ? "Body only enabled." : "Using letterhead." }
+}
+
+@available(iOS 26.0, macOS 26.0, *)
 struct GenerateKeelportCascadeTool: Tool {
     let name = "generateKeelportCascade"
     let description = "Create the Keelport AR Infusion cascade and membership category plan."

@@ -34,6 +34,8 @@ public struct TeamExportView: View {
                     Button("Run Initiative Launch Shield") {
                         runInitiative(focus: "Security, launch readiness, and account recovery")
                     }
+                    Button("Create Stealth Privacy Shield") { generateStealthPrivacyShield() }
+                    Button("Create Launch Mobilization Footprint") { generateLaunchMobilizationFootprint() }
                     Button("Create AR Infusion Membership Cascade") {
                         generateKeelportCascade()
                     }
@@ -143,6 +145,18 @@ public struct TeamExportView: View {
                 includeContactRouting: includeContactRouting
             )
         }
+        .onReceive(NotificationCenter.default.publisher(for: .assistantGenerateStealthPrivacyShield)) { note in
+            if let body = note.userInfo?[AssistantActionKeys.bodyOnly] as? Bool {
+                bodyOnly = body
+            }
+            generateStealthPrivacyShield()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .assistantGenerateLaunchMobilizationFootprint)) { note in
+            if let body = note.userInfo?[AssistantActionKeys.bodyOnly] as? Bool {
+                bodyOnly = body
+            }
+            generateLaunchMobilizationFootprint()
+        }
         .onReceive(NotificationCenter.default.publisher(for: .assistantGenerateKeelportCascade)) { note in
             let focus = note.userInfo?[AssistantActionKeys.focus] as? String
             let includeAppStoreConnectChecklist = note.userInfo?[AssistantActionKeys.includeAppStoreConnectChecklist] as? Bool ?? true
@@ -243,6 +257,34 @@ public struct TeamExportView: View {
                 bodyOnly: bodyOnly
             )
             statusMessage = "Keelport cascade created: \(url.lastPathComponent)"
+            NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
+        } catch {
+            statusMessage = "Error: \(error.localizedDescription)"
+            NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
+        }
+    }
+
+    private func generateStealthPrivacyShield() {
+        do {
+            let url = try TeamDocumentGenerator.writeStealthPrivacyShield(
+                to: exportDirectory,
+                bodyOnly: bodyOnly
+            )
+            statusMessage = "Stealth privacy shield created: \(url.lastPathComponent)"
+            NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
+        } catch {
+            statusMessage = "Error: \(error.localizedDescription)"
+            NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
+        }
+    }
+
+    private func generateLaunchMobilizationFootprint() {
+        do {
+            let url = try TeamDocumentGenerator.writeLaunchMobilizationFootprint(
+                to: exportDirectory,
+                bodyOnly: bodyOnly
+            )
+            statusMessage = "Launch mobilization footprint created: \(url.lastPathComponent)"
             NotificationCenter.default.post(name: .assistantActionStatus, object: nil, userInfo: [AssistantStatusKeys.message: statusMessage])
         } catch {
             statusMessage = "Error: \(error.localizedDescription)"
